@@ -29,7 +29,7 @@ app.post("/upload-image", (req, res) => {
     const uploadedFile = req.files.file;
     const fileName = uploadedFile.name;
     const fileData = uploadedFile.data;
-
+    const image_id = Math.floor(Math.random(0, 10000));
     // Set up the S3 upload parameters
     const uploadParams = {
       Bucket: "images-bucket-vera",
@@ -50,9 +50,9 @@ app.post("/upload-image", (req, res) => {
       const params = {
         TableName: TABLE_NAME,
         Item: {
-          image_id: 1,
+          image_id: image_id,
           fileName: fileName,
-          originalFilePath: data.Location,
+          originalFilePath: data.Location + "/" + image_id,
           processedFilePath: "",
           state: "in progress",
         },
