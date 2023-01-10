@@ -1,0 +1,4 @@
+Swagger UI is available at localhost:4000/api-docs
+Nodemon is only looking at the js mjs and json files
+In api.yaml we gave the title to the Swagger and add another file
+Nodemon.json which will then watch all file extensions we specify
