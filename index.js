@@ -13,7 +13,7 @@ const s3 = new AWS.S3({
 });
 
 const TABLE_NAME = "user-images";
-const dynamoClient = new AWS.DynamoDB.DocumentClient();
+const dynamoDB = new AWS.DynamoDB.DocumentClient({ region: "us-east-1" });
 
 app.use("/api-docs", swaggerUI.serve, swaggerUI.setup(swaggerJsDocs));
 
@@ -44,37 +44,31 @@ app.post("/upload-image", (req, res) => {
         return res.status(500).send("Error uploading file to S3.");
       } else {
         console.log(`File uploaded successfully. ${data.Location}`);
-        return res.status(200).send("File uploaded successfully.");
       }
+
+      /* Add image properties to DynamoDB */
+      const params = {
+        TableName: TABLE_NAME,
+        Item: {
+          image_id: 1,
+          fileName: fileName,
+          originalFilePath: data.Location,
+          processedFilePath: "",
+          state: "in progress",
+        },
+      };
+      dynamoDB.put(params, (error) => {
+        if (error) {
+          console.log(error);
+          return res.status(500).send("Could not add image to dynamo db");
+        } else {
+          console.log("Image data added to table");
+          return res.status(200).send("Image data added successfully");
+        }
+      });
     });
   }
-
-  /* Add image properties to DynamoDB */
-  const getImages = async () => {
-    const params = {
-      TableName: TABLE_NAME,
-    };
-    const images = await dynamoClient.scan(params).promise();
-    console.log(images);
-    return images;
-  };
-
-  const getImagesById = async (id) => {
-    const params = {
-      TableName: TABLE_NAME,
-      Key: {
-        id,
-      },
-
-    };
-    return await dynamoClient.get(params).promise();
-  };
-
-  getImages();
-  getImagesById();
 });
-
-
 
 app.get("/image/:id", (req, res) => {
   res.send(req.params.id);
