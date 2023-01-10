@@ -12,7 +12,7 @@ const s3 = new AWS.S3({
   region: "us-east-1",
 });
 
-const TABLE_NAME = "images";
+const TABLE_NAME = "user-images";
 const dynamoClient = new AWS.DynamoDB.DocumentClient();
 
 app.use("/api-docs", swaggerUI.serve, swaggerUI.setup(swaggerJsDocs));
