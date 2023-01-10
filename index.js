@@ -14,7 +14,7 @@ const s3 = new AWS.S3({
 
 const TABLE_NAME = "user-images";
 const dynamoDB = new AWS.DynamoDB.DocumentClient({ region: "us-east-1" });
-
+const sqs = new AWS.SQS({ region: "us-east-1" });
 app.use("/api-docs", swaggerUI.serve, swaggerUI.setup(swaggerJsDocs));
 
 app.post("/upload-image", (req, res) => {
@@ -64,6 +64,23 @@ app.post("/upload-image", (req, res) => {
         } else {
           console.log("Image data added to table");
           return res.status(200).send("Image data added successfully");
+        }
+      });
+      const sqsParams = {
+        MessageGroupId: image_id,
+        MessageDeduplicationId: image_id,
+        QueueUrl:
+          "https://sqs.us-east-1.amazonaws.com/222621649155/ImageQueue.fifo",
+        MessageBody: JSON.stringify({
+          image_id: image_id,
+          taskState: "in progress",
+        }),
+      };
+      sqs.sendMessage(sqsParams, (error, data) => {
+        if (err) {
+          console.log("Error sending message to SQS: ", error);
+        } else {
+          console.log("Message sent to SQS:", data.MessageId);
         }
       });
     });
