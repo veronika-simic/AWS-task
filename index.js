@@ -3,7 +3,6 @@ const swaggerUI = require("swagger-ui-express");
 const YAML = require("yamljs");
 const upload = require("express-fileupload");
 const swaggerJsDocs = YAML.load("./api.yaml");
-
 const AWS = require("aws-sdk");
 const app = express();
 app.use(express.json());
@@ -13,11 +12,10 @@ const s3 = new AWS.S3({
   region: "us-east-1",
 });
 
-app.use("/api-docs", swaggerUI.serve, swaggerUI.setup(swaggerJsDocs));
+const TABLE_NAME = "images";
+const dynamoClient = new AWS.DynamoDB.DocumentClient();
 
-app.get("/image/:id", (req, res) => {
-  res.send(req.params.id);
-});
+app.use("/api-docs", swaggerUI.serve, swaggerUI.setup(swaggerJsDocs));
 
 app.post("/upload-image", (req, res) => {
   if (!req.files) {
@@ -25,7 +23,7 @@ app.post("/upload-image", (req, res) => {
   } else {
     console.log(
       "File with name ",
-      + req.files.file.name + " was uploaded for processing."
+      +req.files.file.name + " was uploaded for processing."
     );
     // Get the uploaded file
     const uploadedFile = req.files.file;
@@ -50,6 +48,36 @@ app.post("/upload-image", (req, res) => {
       }
     });
   }
+
+  /* Add image properties to DynamoDB */
+  const getImages = async () => {
+    const params = {
+      TableName: TABLE_NAME,
+    };
+    const images = await dynamoClient.scan(params).promise();
+    console.log(images);
+    return images;
+  };
+
+  const getImagesById = async (id) => {
+    const params = {
+      TableName: TABLE_NAME,
+      Key: {
+        id,
+      },
+
+    };
+    return await dynamoClient.get(params).promise();
+  };
+
+  getImages();
+  getImagesById();
+});
+
+
+
+app.get("/image/:id", (req, res) => {
+  res.send(req.params.id);
 });
 
 app.listen(4000, () => console.log("Running"));
