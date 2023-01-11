@@ -29,7 +29,7 @@ app.post("/upload-image", (req, res) => {
     const uploadedFile = req.files.file;
     const fileName = uploadedFile.name;
     const fileData = uploadedFile.data;
-    const image_id = Math.floor(Math.random(0, 10000));
+   
     // Set up the S3 upload parameters
     const uploadParams = {
       Bucket: "images-bucket-vera",
@@ -47,6 +47,7 @@ app.post("/upload-image", (req, res) => {
       }
 
       /* Add image properties to DynamoDB */
+      const image_id = Math.floor(Math.random(0, 10000));
       const params = {
         TableName: TABLE_NAME,
         Item: {
@@ -67,8 +68,8 @@ app.post("/upload-image", (req, res) => {
         }
       });
       const sqsParams = {
-        MessageGroupId: image_id,
-        MessageDeduplicationId: image_id,
+        MessageGroupId: String(image_id),
+        MessageDeduplicationId: String(image_id),
         QueueUrl:
           "https://sqs.us-east-1.amazonaws.com/222621649155/ImageQueue.fifo",
         MessageBody: JSON.stringify({
@@ -77,7 +78,7 @@ app.post("/upload-image", (req, res) => {
         }),
       };
       sqs.sendMessage(sqsParams, (error, data) => {
-        if (err) {
+        if (error) {
           console.log("Error sending message to SQS: ", error);
         } else {
           console.log("Message sent to SQS:", data.MessageId);
