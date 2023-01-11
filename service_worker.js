@@ -1,86 +1,79 @@
-/* const SQSWorker = require("sqs-worker");
-
-const options = {
-  url: "https://sqs.us-east-1.amazonaws.com/222621649155/ImageQueue.fifo",
-};
-
-const queue = new SQSWorker(options, worker);
-
-function worker(notifi, done) {
-  let message;
-  try {
-    message = JSON.parse(notifi.Data);
-  } catch (error) {
-    throw error;
-  }
-
-  console.log(message);
-  let success = true;
-
-  done(null, success);
-}
- */
-
-/* get image from s3 */
-const sharp = require("sharp");
 const AWS = require("aws-sdk");
-AWS.config.update({ region: "us-east-1" });
-const s3 = new AWS.S3();
-const fs = require("fs");
-const dynamodb = new AWS.DynamoDB.DocumentClient();
-const TABLE_NAME = "user-images";
-s3.getObject(
-  { Bucket: "images-bucket-vera", Key: "AWS.png" },
-  (error, data) => {
-    if (error) {
-      console.log(error);
-    } else {
-      console.log(data);
-    }
-  }
-);
 
-const uploadFile = (fileName, bucketName) => {
-  let fileContent = fs.readFileSync(fileName);
-  fileContent = sharp(fileContent).rotate(180);
-  const paramss3 = {
-    Bucket: bucketName,
-    Key: "AWS.png",
-    Body: fileContent,
-  };
-
-  s3.upload(paramss3, (err, data) => {
-    if (err) {
-      console.log(err);
-    } else {
-      console.log(data);
-    }
-  });
-};
-
-uploadFile("AWS.png", "rotated-images");
-
-
-/* update state and url path in dynamoDB */
-const params = {
-  TableName: TABLE_NAME,
-  Key: {
-    image_id: 1,
-    fileName: "AWS.png",
-  },
-  UpdateExpression: "set processedFilePath = :p, image_state = :s",
-  ExpressionAttributeValues: {
-    ":p": "https://rotated-images.s3.amazonaws.com/AWS.png",
-    ":s": "finished",
-  },
-  ReturnValues: "UPDATED_NEW",
-};
-dynamodb.update(params, function (err, data) {
-  if (err) {
-    console.log(err);
-  } else {
-    console.log(data);
-  }
+AWS.config.update({
+  region: "us-east-1",
 });
 
+const sqs = new AWS.SQS();
 
+const sharp = require("sharp");
+const s3 = new AWS.S3();
+const dynamodb = new AWS.DynamoDB.DocumentClient();
+const TABLE_NAME = "user-images";
+const fs = require("fs");
+
+const queueUrl =
+  "https://sqs.us-east-1.amazonaws.com/222621649155/ImageQueue.fifo";
+
+const sqsParams = {
+  QueueUrl: queueUrl,
+  MaxNumberOfMessages: 10,
+  VisibilityTimeout: 20,
+  WaitTimeSeconds: 5,
+};
+
+sqs.receiveMessage(sqsParams, function (err, data) {
+  if (err) {
+    console.log("Receive Error", err);
+  } else {
+    console.log("Received message", data.Messages[0].Body);
+
+    s3.getObject(
+      { Bucket: "images-bucket-vera", Key: data.Messages[0].Body.image_id },
+      (error, data) => {
+        if (error) {
+          console.log(error);
+        } else {
+          console.log(data);
+          const { Body } = s3.getObject(s3params)
+          fs.writeFile(location, Body);
+        }
+      }
+    );
+
+    /*  fileContent = sharp(fileContent).rotate(180); */
+    const s3params = {
+      Bucket: "rotated-images",
+      Key: data.Messages[0].Body.image_id,
+      /* Body: fileContent, */
+    };
+
+    s3.upload(s3params, (err, data) => {
+      if (err) {
+        console.log(err);
+      } else {
+        console.log(data);
+      }
+    });
+    const dynamoParams = {
+      TableName: TABLE_NAME,
+      Key: {
+        image_id: data.Messages[0].Body.image_id,
+        fileName: data.Messages[0].Body.fileName,
+      },
+      UpdateExpression: "set processedFilePath = :p, image_state = :s",
+      ExpressionAttributeValues: {
+        ":p": "https://rotated-images.s3.amazonaws.com/AWS.png",
+        ":s": "finished",
+      },
+      ReturnValues: "UPDATED_NEW",
+    };
+    dynamodb.update(dynamoParams, function (err, data) {
+      if (err) {
+        console.log(err);
+      } else {
+        console.log(data);
+      }
+    });
+  }
+});

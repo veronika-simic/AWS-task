@@ -65,7 +65,6 @@ app.post("/upload-image", (req, res) => {
         }
       });
 
-      
       const sqsParams = {
         MessageGroupId: String(image_id),
         MessageDeduplicationId: String(image_id),
@@ -73,7 +72,8 @@ app.post("/upload-image", (req, res) => {
           "https://sqs.us-east-1.amazonaws.com/222621649155/ImageQueue.fifo",
         MessageBody: JSON.stringify({
           image_id: image_id,
-          taskState: "in progress",
+          fileName: fileName,
+          taskState: "created",
         }),
       };
       sqs.sendMessage(sqsParams, (error, data) => {
