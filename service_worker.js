@@ -29,23 +29,26 @@ sqs.receiveMessage(sqsParams, function (err, data) {
     console.log("Received message", data.Messages[0].Body);
 
     s3.getObject(
-      { Bucket: "images-bucket-vera", Key: data.Messages[0].Body.image_id },
+      {
+        Bucket: "images-bucket-vera",
+        Key: String(data.Messages[0].Body.image_id),
+      },
       (error, data) => {
         if (error) {
           console.log(error);
         } else {
           console.log(data);
-          const { Body } = s3.getObject(s3params)
+          const { Body } = s3.getObject(s3params);
           fs.writeFile(location, Body);
         }
       }
     );
 
-    /*  fileContent = sharp(fileContent).rotate(180); */
+    fileContent = sharp(fileContent).rotate(180);
     const s3params = {
       Bucket: "rotated-images",
-      Key: data.Messages[0].Body.image_id,
-      /* Body: fileContent, */
+      Key: String(data.Messages[0].Body.image_id),
+      Body: fileContent,
     };
 
     s3.upload(s3params, (err, data) => {
