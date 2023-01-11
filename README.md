@@ -1,7 +1,6 @@
 # AWS Task
 
 Upload image and rotate it for 180 degrees
-Live demo [_here_](https://www.example.com).
 
 ## Table of Contents
 

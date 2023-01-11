@@ -1,44 +1,42 @@
+/* express */
 const express = require("express");
+const app = express();
+const upload = require("express-fileupload");
+
+/* swagger */
 const swaggerUI = require("swagger-ui-express");
 const YAML = require("yamljs");
-const upload = require("express-fileupload");
 const swaggerJsDocs = YAML.load("./api.yaml");
-const AWS = require("aws-sdk");
-const app = express();
-app.use(express.json());
-app.use(upload());
 
-const s3 = new AWS.S3({
-  region: "us-east-1",
-});
+/* aws */
+const AWS = require("aws-sdk");
+AWS.config.update({ region: "us-east-1" });
+const s3 = new AWS.S3();
+const dynamoDB = new AWS.DynamoDB.DocumentClient();
+const sqs = new AWS.SQS();
 
 const TABLE_NAME = "user-images";
-const dynamoDB = new AWS.DynamoDB.DocumentClient({ region: "us-east-1" });
-const sqs = new AWS.SQS({ region: "us-east-1" });
+
+app.use(express.json());
+app.use(upload());
 app.use("/api-docs", swaggerUI.serve, swaggerUI.setup(swaggerJsDocs));
 
 app.post("/upload-image", (req, res) => {
+  const uploadedFile = req.files.file;
+  const fileName = uploadedFile.name;
+  const fileData = uploadedFile.data;
+
   if (!req.files) {
     res.status(400).send("No file uploaded");
   } else {
-    console.log(
-      "File with name ",
-      +req.files.file.name + " was uploaded for processing."
-    );
-    // Get the uploaded file
-    const uploadedFile = req.files.file;
-    const fileName = uploadedFile.name;
-    const fileData = uploadedFile.data;
-   
-    // Set up the S3 upload parameters
-    const uploadParams = {
+    console.log("File with name " + fileName + " was uploaded for processing.");
+
+    const s3Params = {
       Bucket: "images-bucket-vera",
       Key: fileName,
       Body: fileData,
     };
-
-    // Upload the file to S3
-    s3.upload(uploadParams, (err, data) => {
+    s3.upload(s3Params, (err, data) => {
       if (err) {
         console.log(err);
         return res.status(500).send("Error uploading file to S3.");
@@ -46,9 +44,8 @@ app.post("/upload-image", (req, res) => {
         console.log(`File uploaded successfully. ${data.Location}`);
       }
 
-      /* Add image properties to DynamoDB */
       const image_id = Math.floor(Math.random(0, 10000));
-      const params = {
+      const dynamoParams = {
         TableName: TABLE_NAME,
         Item: {
           image_id: image_id,
@@ -58,15 +55,17 @@ app.post("/upload-image", (req, res) => {
           image_state: "in progress",
         },
       };
-      dynamoDB.put(params, (error) => {
+      dynamoDB.put(dynamoParams, (error) => {
         if (error) {
           console.log(error);
-          return res.status(500).send("Could not add image to dynamo db");
+          return res.status(500).send("Could not add image to table");
         } else {
-          console.log("Image data added to table");
+          console.log("Image data added to table " + TABLE_NAME);
           return res.status(200).send("Image data added successfully");
         }
       });
+
+      
       const sqsParams = {
         MessageGroupId: String(image_id),
         MessageDeduplicationId: String(image_id),
