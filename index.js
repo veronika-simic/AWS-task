@@ -55,7 +55,7 @@ app.post("/upload-image", (req, res) => {
           fileName: fileName,
           originalFilePath: data.Location + "/" + image_id,
           processedFilePath: "",
-          state: "in progress",
+          image_state: "in progress",
         },
       };
       dynamoDB.put(params, (error) => {

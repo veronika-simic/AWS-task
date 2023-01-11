@@ -24,8 +24,11 @@ function worker(notifi, done) {
 /* get image from s3 */
 const sharp = require("sharp");
 const AWS = require("aws-sdk");
-const s3 = new AWS.S3({ region: "us-east-1" });
+AWS.config.update({ region: "us-east-1" });
+const s3 = new AWS.S3();
 const fs = require("fs");
+const dynamodb = new AWS.DynamoDB.DocumentClient();
+const TABLE_NAME = "user-images";
 s3.getObject(
   { Bucket: "images-bucket-vera", Key: "AWS.png" },
   (error, data) => {
@@ -38,23 +41,44 @@ s3.getObject(
 );
 
 const uploadFile = (fileName, bucketName) => {
-    let fileContent = fs.readFileSync(fileName);
-    fileContent = sharp(fileContent).rotate(180);
-    const params = {
-      Bucket: bucketName,
-      Key: "AWS.png",
-      Body: fileContent,
-    };
-  
-    s3.upload(params, (err, data) => {
-      if (err) {
-        console.log(err);
-      } else {
-        console.log(data);
-      }
-    });
+  let fileContent = fs.readFileSync(fileName);
+  fileContent = sharp(fileContent).rotate(180);
+  const paramss3 = {
+    Bucket: bucketName,
+    Key: "AWS.png",
+    Body: fileContent,
   };
-  
-  uploadFile('AWS.png', 'rotated-images')
-  
+
+  s3.upload(paramss3, (err, data) => {
+    if (err) {
+      console.log(err);
+    } else {
+      console.log(data);
+    }
+  });
+};
+
+uploadFile("AWS.png", "rotated-images");
+
+const params = {
+  TableName: TABLE_NAME,
+  Key: {
+    image_id: 1,
+    fileName: "AWS.png",
+  },
+  UpdateExpression: "set processedFilePath = :p, image_state = :s",
+  ExpressionAttributeValues: {
+    ":p": "https://rotated-images.s3.amazonaws.com/AWS.png",
+    ":s": "finished",
+  },
+  ReturnValues: "UPDATED_NEW",
+};
+dynamodb.update(params, function (err, data) {
+  if (err) {
+    console.log(err);
+  } else {
+    console.log(data);
+  }
+});
+
 /* update state and url path in dynamoDB */
