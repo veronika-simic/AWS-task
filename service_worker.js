@@ -60,6 +60,8 @@ const uploadFile = (fileName, bucketName) => {
 
 uploadFile("AWS.png", "rotated-images");
 
+
+/* update state and url path in dynamoDB */
 const params = {
   TableName: TABLE_NAME,
   Key: {
@@ -81,4 +83,4 @@ dynamodb.update(params, function (err, data) {
   }
 });
 
-/* update state and url path in dynamoDB */
+
