@@ -76,13 +76,14 @@ app.post("/upload-image", (req, res) => {
           taskState: "created",
         }),
       };
-      sqs.sendMessage(sqsParams, (error, data) => {
+      console.log(sqsParams.MessageBody)
+      /* sqs.sendMessage(sqsParams, (error, data) => {
         if (error) {
           console.log("Error sending message to SQS: ", error);
         } else {
           console.log("Message sent to SQS:", data.MessageId);
         }
-      });
+      }); */
     });
   }
 });
