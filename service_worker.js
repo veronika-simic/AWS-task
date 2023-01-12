@@ -34,7 +34,7 @@ sqs.receiveMessage(sqsParams, function (err, data) {
   if (err) {
     console.log("Receive Error", err);
   } else if (data.Messages) {
-    const dynamoParams = {
+    const dynamoGetParams = {
       Key: {
         image_id: {
           N: JSON.parse(data.Messages[0].Body).image_id.toString(),
@@ -46,7 +46,7 @@ sqs.receiveMessage(sqsParams, function (err, data) {
       TableName: TABLE_NAME,
     };
 
-    dynamodb.getItem(dynamoParams, (error, data) => {
+    dynamodb.getItem(dynamoGetParams, (error, data) => {
       if (error) {
         console.log(error);
       } else {
@@ -57,24 +57,12 @@ sqs.receiveMessage(sqsParams, function (err, data) {
       }
     });
 
-    var deleteParams = {
-      QueueUrl: queueUrl,
-      ReceiptHandle: data.Messages[0].ReceiptHandle,
-    };
-
-    sqs.deleteMessage(deleteParams, function (err, data) {
-      if (err) {
-        console.log("Delete Error", err);
-      } else {
-        console.log("Message Deleted", data);
-      }
-    });
-  }
-
-  /*  fileContent = sharp(fileContent).rotate(180);
+    fileContent = sharp("./user-image.jpg").rotate(180);
     const s3params = {
       Bucket: "rotated-images",
-      Key: String(data.Messages[last].Body.image_id),
+      Key:
+        JSON.parse(data.Messages[0].Body).image_id.toString() +
+        JSON.parse(data.Messages[0].Body).fileName,
       Body: fileContent,
     };
 
@@ -85,11 +73,12 @@ sqs.receiveMessage(sqsParams, function (err, data) {
         console.log(data);
       }
     });
-    const dynamoParams = {
+
+    /*  const dynamoParams = {
       TableName: TABLE_NAME,
       Key: {
-        image_id: data.Messages[last].Body.image_id,
-        fileName: data.Messages[last].Body.fileName,
+        image_id: data.Messages[0].Body.image_id,
+        fileName: data.Messages[0].Body.fileName,
       },
       UpdateExpression: "set processedFilePath = :p, image_state = :s",
       ExpressionAttributeValues: {
@@ -104,6 +93,19 @@ sqs.receiveMessage(sqsParams, function (err, data) {
       } else {
         console.log(data);
       }
-    }); 
-  } */
+    }); */
+
+    var deleteParams = {
+      QueueUrl: queueUrl,
+      ReceiptHandle: data.Messages[0].ReceiptHandle,
+    };
+
+    sqs.deleteMessage(deleteParams, function (err, data) {
+      if (err) {
+        console.log("Delete Error", err);
+      } else {
+        console.log("Message Deleted", data);
+      }
+    });
+  }
 });
