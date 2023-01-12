@@ -24,7 +24,7 @@ app.use("/api-docs", swaggerUI.serve, swaggerUI.setup(swaggerJsDocs));
 app.post("/upload-image", (req, res) => {
   const image_id = Math.floor(Math.random(0, 1) * 10000);
   const uploadedFile = req.files.file;
-  const fileName = uploadedFile.name
+  const fileName = uploadedFile.name;
   const fileData = uploadedFile.data;
 
   if (!req.files) {
@@ -34,9 +34,10 @@ app.post("/upload-image", (req, res) => {
 
     const s3Params = {
       Bucket: "images-bucket-vera",
-      Key: fileName,
+      Key: image_id + fileName,
       Body: fileData,
     };
+    console.log(s3Params.Key);
     s3.upload(s3Params, (err, data) => {
       if (err) {
         console.log(err);
@@ -50,7 +51,7 @@ app.post("/upload-image", (req, res) => {
         Item: {
           image_id: image_id,
           fileName: fileName,
-          originalFilePath: data.Location + image_id,
+          originalFilePath: data.Location,
           processedFilePath: "",
           image_state: "in progress",
         },
