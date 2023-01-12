@@ -44,7 +44,7 @@ app.post("/upload-image", (req, res) => {
         console.log(`File uploaded successfully. ${data.Location}`);
       }
 
-      const image_id = Math.floor(Math.random(0, 10000));
+      const image_id = Math.floor(Math.random(0, 1) * 10000);
       const dynamoParams = {
         TableName: TABLE_NAME,
         Item: {
@@ -76,14 +76,14 @@ app.post("/upload-image", (req, res) => {
           taskState: "created",
         }),
       };
-      console.log(sqsParams.MessageBody)
-      /* sqs.sendMessage(sqsParams, (error, data) => {
+      console.log(sqsParams.MessageBody);
+      sqs.sendMessage(sqsParams, (error, data) => {
         if (error) {
           console.log("Error sending message to SQS: ", error);
         } else {
           console.log("Message sent to SQS:", data.MessageId);
         }
-      }); */
+      });
     });
   }
 });

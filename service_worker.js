@@ -8,13 +8,23 @@ const sqs = new AWS.SQS();
 
 const sharp = require("sharp");
 const s3 = new AWS.S3();
-const dynamodb = new AWS.DynamoDB.DocumentClient();
+const dynamodb = new AWS.DynamoDB();
 const TABLE_NAME = "user-images";
-const fs = require("fs");
 
 const queueUrl =
   "https://sqs.us-east-1.amazonaws.com/222621649155/ImageQueue.fifo";
 
+const fs = require("fs");
+const request = require("request");
+
+const download = function (uri, filename, callback) {
+  request.head(uri, function (err, res, body) {
+    console.log("content-type:", res.headers["content-type"]);
+    console.log("content-length:", res.headers["content-length"]);
+
+    request(uri).pipe(fs.createWriteStream(filename)).on("close", callback);
+  });
+};
 const sqsParams = {
   QueueUrl: queueUrl,
   MaxNumberOfMessages: 10,
@@ -23,32 +33,41 @@ const sqsParams = {
 };
 
 sqs.receiveMessage(sqsParams, function (err, data) {
+  const last = data.Messages.length - 1;
+  console.log(last);
   if (err) {
     console.log("Receive Error", err);
   } else {
-    console.log("Received message", data.Messages[5].Body);
-    console.log(JSON.parse(data.Messages[5].Body).fileName)
+    console.log("Received message", data.Messages[last].Body);
+    console.log(JSON.parse(data.Messages[last].Body).fileName);
+    console.log(JSON.parse(data.Messages[last].Body).image_id);
 
-    s3.getObject(
-      {
-        Bucket: "images-bucket-vera",
-        Key: JSON.parse(data.Messages[5].Body).fileName,
+     const dynamoParams = {
+      Key: {
+        image_id: {
+          N: JSON.parse(data.Messages[last].Body).image_id.toString(),
+        },
+        fileName: {
+          S: JSON.parse(data.Messages[last].Body).fileName,
+        },
       },
-      (error, data) => {
-        if (error) {
-          console.log(error);
-        } else {
-          console.log(data);
-         /*  const { Body } = s3.getObject(s3params);
-          fs.writeFile(location, Body); */
-        }
-      }
-    );
+      TableName: TABLE_NAME,
+    };
 
+    dynamodb.getItem(dynamoParams, (error, data) => {
+      if (error) {
+        console.log(error);
+      } else {
+        console.log(data.Item.originalFilePath.S);
+        download(data.Item.originalFilePath.S, "user-image.jpg", function () {
+          console.log("done");
+        });
+      }
+    });
     /*  fileContent = sharp(fileContent).rotate(180);
     const s3params = {
       Bucket: "rotated-images",
-      Key: String(data.Messages[0].Body.image_id),
+      Key: String(data.Messages[last].Body.image_id),
       Body: fileContent,
     };
 
@@ -62,8 +81,8 @@ sqs.receiveMessage(sqsParams, function (err, data) {
     const dynamoParams = {
       TableName: TABLE_NAME,
       Key: {
-        image_id: data.Messages[0].Body.image_id,
-        fileName: data.Messages[0].Body.fileName,
+        image_id: data.Messages[last].Body.image_id,
+        fileName: data.Messages[last].Body.fileName,
       },
       UpdateExpression: "set processedFilePath = :p, image_state = :s",
       ExpressionAttributeValues: {
