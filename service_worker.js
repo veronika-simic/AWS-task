@@ -18,7 +18,7 @@ const fs = require("fs");
 const request = require("request");
 
 const download = function (uri, filename, callback) {
-  request.head(uri, function (err, res, body) {
+  request.head(uri, () => {
     request(uri).pipe(fs.createWriteStream(filename)).on("close", callback);
   });
 };
@@ -30,7 +30,6 @@ const sqsParams = {
 };
 
 sqs.receiveMessage(sqsParams, function (err, data) {
-  console.log(data.Messages);
   if (err) {
     console.log("Receive Error", err);
   } else if (data.Messages) {
@@ -50,7 +49,6 @@ sqs.receiveMessage(sqsParams, function (err, data) {
       if (error) {
         console.log(error);
       } else {
-        console.log(data.Item.originalFilePath.S);
         download(data.Item.originalFilePath.S, "user-image.jpg", function () {
           console.log("done");
         });
@@ -70,30 +68,28 @@ sqs.receiveMessage(sqsParams, function (err, data) {
       if (err) {
         console.log(err);
       } else {
-        console.log(data);
+        const dynamoParams = {
+          TableName: TABLE_NAME,
+          Key: {
+            image_id: data.Messages[0].Body.image_id,
+            fileName: data.Messages[0].Body.fileName,
+          },
+          UpdateExpression: "set processedFilePath = :p, image_state = :s",
+          ExpressionAttributeValues: {
+            ":p": data.Location,
+            ":s": "finished",
+          },
+          ReturnValues: "UPDATED_NEW",
+        };
+        dynamodb.update(dynamoParams, function (err, data) {
+          if (err) {
+            console.log(err);
+          } else {
+            console.log(data);
+          }
+        });
       }
     });
-
-    /*  const dynamoParams = {
-      TableName: TABLE_NAME,
-      Key: {
-        image_id: data.Messages[0].Body.image_id,
-        fileName: data.Messages[0].Body.fileName,
-      },
-      UpdateExpression: "set processedFilePath = :p, image_state = :s",
-      ExpressionAttributeValues: {
-        ":p": "https://rotated-images.s3.amazonaws.com/AWS.png",
-        ":s": "finished",
-      },
-      ReturnValues: "UPDATED_NEW",
-    };
-    dynamodb.update(dynamoParams, function (err, data) {
-      if (err) {
-        console.log(err);
-      } else {
-        console.log(data);
-      }
-    }); */
 
     var deleteParams = {
       QueueUrl: queueUrl,
@@ -109,3 +105,5 @@ sqs.receiveMessage(sqsParams, function (err, data) {
     });
   }
 });
+
+/* while the image is being rotated state should be in progress */

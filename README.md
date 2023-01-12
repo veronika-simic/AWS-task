@@ -17,7 +17,7 @@ Upload image and rotate it for 180 degrees
 
 ## General Information
 
-- The main purpouse of this project is to enable the user to upload an image through Swagger and user then recives rotated image
+- The main purpouse of this project is to enable the user to upload an image through Swagger and then user recives rotated image
 - This project is made to practice skills in AWS, Docker, Swagger, Express
 
 ## Technologies Used
@@ -29,7 +29,7 @@ Upload image and rotate it for 180 degrees
 
 ## Screenshots
 
-![Example screenshot](./img/screenshot.png)
+![UI Swagger](./img/screenshot.png)
 
 ## Setup
 
@@ -64,8 +64,6 @@ To do:
 - Feature to be added 2
 
 ## Acknowledgements
-
-Give credit here.
 
 - This project was inspired by Akvelon Inc.
 
