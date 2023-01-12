@@ -49,13 +49,13 @@ sqs.receiveMessage(sqsParams, function (err, data) {
       if (error) {
         console.log(error);
       } else {
-        download(data.Item.originalFilePath.S, "user-image.jpg", function () {
+        download(data.Item.originalFilePath.S, "user-image.jpeg", function () {
           console.log("done");
         });
       }
     });
 
-    fileContent = sharp("./user-image.jpg").rotate(180);
+    fileContent = sharp("./user-image.jpeg").rotate(180);
     const s3params = {
       Bucket: "rotated-images",
       Key:
@@ -63,16 +63,16 @@ sqs.receiveMessage(sqsParams, function (err, data) {
         JSON.parse(data.Messages[0].Body).fileName,
       Body: fileContent,
     };
-
     s3.upload(s3params, (err, data) => {
       if (err) {
         console.log(err);
       } else {
+        console.log(`File uploaded successfully. ${data.Location}`);
         const dynamoParams = {
           TableName: TABLE_NAME,
           Key: {
-            image_id: data.Messages[0].Body.image_id,
-            fileName: data.Messages[0].Body.fileName,
+            image_id: s3params.Key,
+            fileName: JSON.parse(data.Messages[0].Body).fileName,
           },
           UpdateExpression: "set processedFilePath = :p, image_state = :s",
           ExpressionAttributeValues: {
@@ -81,6 +81,7 @@ sqs.receiveMessage(sqsParams, function (err, data) {
           },
           ReturnValues: "UPDATED_NEW",
         };
+
         dynamodb.update(dynamoParams, function (err, data) {
           if (err) {
             console.log(err);
