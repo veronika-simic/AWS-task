@@ -22,8 +22,9 @@ app.use(upload());
 app.use("/api-docs", swaggerUI.serve, swaggerUI.setup(swaggerJsDocs));
 
 app.post("/upload-image", (req, res) => {
+  const image_id = Math.floor(Math.random(0, 1) * 10000);
   const uploadedFile = req.files.file;
-  const fileName = uploadedFile.name;
+  const fileName = uploadedFile.name
   const fileData = uploadedFile.data;
 
   if (!req.files) {
@@ -44,13 +45,12 @@ app.post("/upload-image", (req, res) => {
         console.log(`File uploaded successfully. ${data.Location}`);
       }
 
-      const image_id = Math.floor(Math.random(0, 1) * 10000);
       const dynamoParams = {
         TableName: TABLE_NAME,
         Item: {
           image_id: image_id,
           fileName: fileName,
-          originalFilePath: data.Location + "/" + image_id,
+          originalFilePath: data.Location + image_id,
           processedFilePath: "",
           image_state: "in progress",
         },

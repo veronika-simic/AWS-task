@@ -33,22 +33,17 @@ const sqsParams = {
 };
 
 sqs.receiveMessage(sqsParams, function (err, data) {
-  const last = data.Messages.length - 1;
-  console.log(last);
+  console.log(data.Messages);
   if (err) {
     console.log("Receive Error", err);
-  } else {
-    console.log("Received message", data.Messages[last].Body);
-    console.log(JSON.parse(data.Messages[last].Body).fileName);
-    console.log(JSON.parse(data.Messages[last].Body).image_id);
-
-     const dynamoParams = {
+  } else if (data.Messages) {
+    const dynamoParams = {
       Key: {
         image_id: {
-          N: JSON.parse(data.Messages[last].Body).image_id.toString(),
+          N: JSON.parse(data.Messages[0].Body).image_id.toString(),
         },
         fileName: {
-          S: JSON.parse(data.Messages[last].Body).fileName,
+          S: JSON.parse(data.Messages[0].Body).fileName,
         },
       },
       TableName: TABLE_NAME,
@@ -64,7 +59,22 @@ sqs.receiveMessage(sqsParams, function (err, data) {
         });
       }
     });
-    /*  fileContent = sharp(fileContent).rotate(180);
+
+    var deleteParams = {
+      QueueUrl: queueUrl,
+      ReceiptHandle: data.Messages[0].ReceiptHandle,
+    };
+
+    sqs.deleteMessage(deleteParams, function (err, data) {
+      if (err) {
+        console.log("Delete Error", err);
+      } else {
+        console.log("Message Deleted", data);
+      }
+    });
+  }
+
+  /*  fileContent = sharp(fileContent).rotate(180);
     const s3params = {
       Bucket: "rotated-images",
       Key: String(data.Messages[last].Body.image_id),
@@ -97,6 +107,6 @@ sqs.receiveMessage(sqsParams, function (err, data) {
       } else {
         console.log(data);
       }
-    });*/
-  }
+    }); 
+  } */
 });
