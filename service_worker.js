@@ -9,6 +9,7 @@ const sqs = new AWS.SQS();
 const sharp = require("sharp");
 const s3 = new AWS.S3();
 const dynamodb = new AWS.DynamoDB();
+const dynamodbClient = new AWS.DynamoDB.DocumentClient();
 const TABLE_NAME = "user-images";
 
 const queueUrl =
@@ -49,13 +50,16 @@ sqs.receiveMessage(sqsParams, function (err, data) {
       if (error) {
         console.log(error);
       } else {
-        download(data.Item.originalFilePath.S, "user-image.jpeg", function () {
-          console.log("done");
+        console.log("Fetching image....");
+        download(data.Item.originalFilePath.S, "user-image.jpg", function () {
+          console.log("Image is ready for processing");
         });
       }
     });
 
-    fileContent = sharp("./user-image.jpeg").rotate(180);
+    /* some how postpone this */
+    fileContent = sharp("./user-image.jpg").rotate(180);
+
     const s3params = {
       Bucket: "rotated-images",
       Key:
@@ -63,12 +67,35 @@ sqs.receiveMessage(sqsParams, function (err, data) {
         JSON.parse(data.Messages[0].Body).fileName,
       Body: fileContent,
     };
+    const dynamoParams = {
+      TableName: TABLE_NAME,
+      Key: {
+        image_id: JSON.parse(data.Messages[0].Body).image_id,
+        fileName: JSON.parse(data.Messages[0].Body).fileName,
+      },
+      UpdateExpression: "set image_state = :s",
+      ExpressionAttributeValues: {
+        ":s": "in progress",
+      },
+    };
+    dynamodbClient.update(dynamoParams, function (err, data) {
+      if (err) {
+        console.log(err);
+      } else {
+        console.log(data);
+        console.log("State changed to in progress");
+      }
+    });
+
     s3.upload(s3params, (err, data) => {
       if (err) {
         console.log(err);
       } else {
         console.log(`File uploaded successfully. ${data.Location}`);
-        const dynamoParams = {
+      }
+    });
+
+    /*   const dynamoParams = {
           TableName: TABLE_NAME,
           Key: {
             image_id: s3params.Key,
@@ -88,11 +115,8 @@ sqs.receiveMessage(sqsParams, function (err, data) {
           } else {
             console.log(data);
           }
-        });
-      }
-    });
-
-    var deleteParams = {
+        }); */
+     var deleteParams = {
       QueueUrl: queueUrl,
       ReceiptHandle: data.Messages[0].ReceiptHandle,
     };
@@ -103,7 +127,7 @@ sqs.receiveMessage(sqsParams, function (err, data) {
       } else {
         console.log("Message Deleted", data);
       }
-    });
+    });  
   }
 });
 
