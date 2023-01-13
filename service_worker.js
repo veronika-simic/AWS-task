@@ -47,7 +47,6 @@ sqs.receiveMessage(sqsParams, function (err, data) {
       },
       TableName: TABLE_NAME,
     };
-    console.log(JSON.parse(data.Messages[0].Body).image_id);
     dynamodb.getItem(dynamoGetParams, (error, data) => {
       if (error) {
         console.log(error);
@@ -93,6 +92,7 @@ sqs.receiveMessage(sqsParams, function (err, data) {
           console.log(err);
         } else {
           console.log(`File uploaded successfully. ${data.Location}`);
+          console.log(`Find it here:  ${data.Location}`);
           dynamoParams = {
             TableName: TABLE_NAME,
             Key: {
@@ -111,7 +111,6 @@ sqs.receiveMessage(sqsParams, function (err, data) {
                 return err;
               } else {
                 console.log("State changed to finished");
-                console.log("Visit to see the image");
                 return data;
               }
             });
@@ -127,7 +126,6 @@ sqs.receiveMessage(sqsParams, function (err, data) {
         if (err) {
           return err;
         } else {
-          console.log(data);
           return data;
         }
       });
@@ -135,8 +133,8 @@ sqs.receiveMessage(sqsParams, function (err, data) {
 
     setTimeout(() => {
       fs.unlink("./user-image.jpg", () => {
-        console.log("Image deleted");
+        return "Image deleted";
       });
-    }, "5000");
+    }, "4000");
   }
 });
