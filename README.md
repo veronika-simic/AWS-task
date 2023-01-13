@@ -31,11 +31,6 @@ Upload image and rotate it for 180 degrees
 
 ![UI Swagger](./img/screenshot.png)
 
-## Setup
-
-What are the project requirements/dependencies? Where are they listed? A requirements.txt or a Pipfile.lock file perhaps? Where is it located?
-
-Proceed to describe how to install / setup one's local environment / get started with the project.
 
 ## Usage
 
@@ -49,23 +44,10 @@ Visit localhost:4000/api-docs for swagger
 
 Project is: _in progress_
 
-## Room for Improvement
-
-Include areas you believe need improvement / could be improved.
-
-Room for improvement:
-
-- Improvement to be done 1
-- Improvement to be done 2
-
-To do:
-
-- Feature to be added 1
-- Feature to be added 2
-
 ## Acknowledgements
 
 - This project was inspired by Akvelon Inc.
+- Special thanks to [@dmitryshulaykin](https://github.com/dmitriyqq)
 
 ## Contact
 

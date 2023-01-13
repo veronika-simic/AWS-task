@@ -19,7 +19,7 @@ paths:
   /image/{imageId}:
     get:
       summary: Returns flipped image by id
-      description: It returns an image flipped for 180 degrees
+      description: It returns a link for image flipped for 180 degrees and state
       parameters:
         - in: path
           name: imageId
