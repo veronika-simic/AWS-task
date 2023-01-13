@@ -47,7 +47,7 @@ sqs.receiveMessage(sqsParams, function (err, data) {
       },
       TableName: TABLE_NAME,
     };
-
+    console.log(JSON.parse(data.Messages[0].Body).image_id);
     dynamodb.getItem(dynamoGetParams, (error, data) => {
       if (error) {
         console.log(error);
@@ -127,6 +127,7 @@ sqs.receiveMessage(sqsParams, function (err, data) {
         if (err) {
           return err;
         } else {
+          console.log(data);
           return data;
         }
       });

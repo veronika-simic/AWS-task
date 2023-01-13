@@ -2,7 +2,6 @@
 const express = require("express");
 const app = express();
 const upload = require("express-fileupload");
-
 /* swagger */
 const swaggerUI = require("swagger-ui-express");
 const YAML = require("yamljs");
@@ -62,7 +61,7 @@ app.post("/upload-image", (req, res) => {
           return res.status(500).send("Could not add image to table");
         } else {
           console.log("Image data added to table " + TABLE_NAME);
-          return res.status(200).send("Image data added successfully");
+          return res.status(200).send("Image data added successfully. Image id is: " + image_id + " use it to get the rotated image.");
         }
       });
 
@@ -76,6 +75,20 @@ app.post("/upload-image", (req, res) => {
           fileName: fileName,
           taskState: "created",
         }),
+        MessageAttributes: {
+          "image_id": {
+            DataType: "String",
+            StringValue: String(image_id),
+          },
+          "fileName": {
+            DataType: "String",
+            StringValue: fileName
+          },
+          "state": {
+            DataType: "String",
+            StringValue: dynamoParams.Item.image_state
+          }
+        }
       };
       console.log(sqsParams.MessageBody);
       sqs.sendMessage(sqsParams, (error, data) => {
