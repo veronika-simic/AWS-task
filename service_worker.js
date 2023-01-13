@@ -105,16 +105,17 @@ sqs.receiveMessage(sqsParams, function (err, data) {
               ":s": "finished",
             },
           };
-
-          dynamodbClient.update(dynamoParams, function (err, data) {
-            if (err) {
-              return err;
-            } else {
-              console.log("State changed to finished");
-              console.log("Visit to see the image");
-              return data;
-            }
-          });
+          setTimeout(() => {
+            dynamodbClient.update(dynamoParams, function (err, data) {
+              if (err) {
+                return err;
+              } else {
+                console.log("State changed to finished");
+                console.log("Visit to see the image");
+                return data;
+              }
+            });
+          }, "5000");
         }
       });
       var deleteParams = {
@@ -136,6 +137,5 @@ sqs.receiveMessage(sqsParams, function (err, data) {
         console.log("Image deleted");
       });
     }, "5000");
-    /* delete image  */
   }
 });
