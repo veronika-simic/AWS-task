@@ -34,13 +34,15 @@ sqs.receiveMessage(sqsParams, function (err, data) {
   if (err) {
     console.log("Receive Error", err);
   } else if (data.Messages) {
+    const image_id = JSON.parse(data.Messages[0].Body).image_id;
+    const fileName = JSON.parse(data.Messages[0].Body).fileName;
     const dynamoGetParams = {
       Key: {
         image_id: {
-          N: JSON.parse(data.Messages[0].Body).image_id.toString(),
+          N: image_id.toString(),
         },
         fileName: {
-          S: JSON.parse(data.Messages[0].Body).fileName,
+          S: fileName,
         },
       },
       TableName: TABLE_NAME,
@@ -57,78 +59,83 @@ sqs.receiveMessage(sqsParams, function (err, data) {
       }
     });
 
-    /* some how postpone this */
-    fileContent = sharp("./user-image.jpg").rotate(180);
+    setTimeout(() => {
+      fileContent = sharp("./user-image.jpg", { failOnError: false }).rotate(
+        180
+      );
+      let dynamoParams = {
+        TableName: TABLE_NAME,
+        Key: {
+          image_id: image_id,
+          fileName: fileName,
+        },
+        UpdateExpression: "set image_state = :s",
+        ExpressionAttributeValues: {
+          ":s": "in progress",
+        },
+      };
+      dynamodbClient.update(dynamoParams, function (err, data) {
+        if (err) {
+          console.log(err);
+        } else {
+          console.log("State changed to in progress");
+        }
+      });
+      const s3params = {
+        Bucket: "rotated-images",
+        Key:
+          JSON.parse(data.Messages[0].Body).image_id.toString() +
+          JSON.parse(data.Messages[0].Body).fileName,
+        Body: fileContent,
+      };
+      s3.upload(s3params, (err, data) => {
+        if (err) {
+          console.log(err);
+        } else {
+          console.log(`File uploaded successfully. ${data.Location}`);
+          dynamoParams = {
+            TableName: TABLE_NAME,
+            Key: {
+              image_id: image_id,
+              fileName: fileName,
+            },
+            UpdateExpression: "set processedFilePath = :p, image_state = :s",
+            ExpressionAttributeValues: {
+              ":p": data.Location,
+              ":s": "finished",
+            },
+          };
 
-    const s3params = {
-      Bucket: "rotated-images",
-      Key:
-        JSON.parse(data.Messages[0].Body).image_id.toString() +
-        JSON.parse(data.Messages[0].Body).fileName,
-      Body: fileContent,
-    };
-    const dynamoParams = {
-      TableName: TABLE_NAME,
-      Key: {
-        image_id: JSON.parse(data.Messages[0].Body).image_id,
-        fileName: JSON.parse(data.Messages[0].Body).fileName,
-      },
-      UpdateExpression: "set image_state = :s",
-      ExpressionAttributeValues: {
-        ":s": "in progress",
-      },
-    };
-    dynamodbClient.update(dynamoParams, function (err, data) {
-      if (err) {
-        console.log(err);
-      } else {
-        console.log(data);
-        console.log("State changed to in progress");
-      }
-    });
+          dynamodbClient.update(dynamoParams, function (err, data) {
+            if (err) {
+              return err;
+            } else {
+              console.log("State changed to finished");
+              console.log("Visit to see the image");
+              return data;
+            }
+          });
+        }
+      });
+      var deleteParams = {
+        QueueUrl: queueUrl,
+        ReceiptHandle: data.Messages[0].ReceiptHandle,
+      };
 
-    s3.upload(s3params, (err, data) => {
-      if (err) {
-        console.log(err);
-      } else {
-        console.log(`File uploaded successfully. ${data.Location}`);
-      }
-    });
+      sqs.deleteMessage(deleteParams, function (err, data) {
+        if (err) {
+          return err;
+        } else {
+          return data;
+        }
+      });
+    }, "3000");
 
-    /*   const dynamoParams = {
-          TableName: TABLE_NAME,
-          Key: {
-            image_id: s3params.Key,
-            fileName: JSON.parse(data.Messages[0].Body).fileName,
-          },
-          UpdateExpression: "set processedFilePath = :p, image_state = :s",
-          ExpressionAttributeValues: {
-            ":p": data.Location,
-            ":s": "finished",
-          },
-          ReturnValues: "UPDATED_NEW",
-        };
-
-        dynamodb.update(dynamoParams, function (err, data) {
-          if (err) {
-            console.log(err);
-          } else {
-            console.log(data);
-          }
-        }); */
-     var deleteParams = {
-      QueueUrl: queueUrl,
-      ReceiptHandle: data.Messages[0].ReceiptHandle,
-    };
-
-    sqs.deleteMessage(deleteParams, function (err, data) {
-      if (err) {
-        console.log("Delete Error", err);
-      } else {
-        console.log("Message Deleted", data);
-      }
-    });  
+    setTimeout(() => {
+      fs.unlink("./user-image.jpg", () => {
+        console.log("Image deleted");
+      });
+    }, "5000");
+    /* delete image  */
   }
 });
-
-/* while the image is being rotated state should be in progress */
