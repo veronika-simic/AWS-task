@@ -59,7 +59,7 @@ paths:
         200:
           description: Success
           content:
-            image/png:
+             image/*:
               schema:
                 type: string
                 format: binary
