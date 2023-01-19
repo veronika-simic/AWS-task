@@ -35,10 +35,17 @@ Upload image and rotate it for 180 degrees
 
 Download the repository and run
 
-npm run serve index.js
+npm run serve
 
 Visit localhost:4000/api-docs
 
+Or pull docker image
+
+sudo docker pull veronikasimic21/aws:latest
+
+and run it
+
+sudo docker run -v ~/.aws:/root/.aws -p 4000:4000 veronikasimic21/aws
 ## Project Status
 
 Project is: _in progress_
