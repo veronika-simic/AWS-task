@@ -7,6 +7,8 @@ const swaggerUI = require("swagger-ui-express");
 const YAML = require("yamljs");
 const swaggerJsDocs = YAML.load("./api.yaml");
 
+const sw = require('./service_worker')
+
 /* aws */
 const AWS = require("aws-sdk");
 AWS.config.update({ region: "us-east-1" });
@@ -104,6 +106,7 @@ app.post("/upload-image", (req, res) => {
         } else {
           console.log("Message sent to SQS:", data.MessageId);
         }
+        sw()
       });
     });
   }
