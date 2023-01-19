@@ -46,6 +46,7 @@ sudo docker pull veronikasimic21/aws:latest
 and run it
 
 sudo docker run -v ~/.aws:/root/.aws -p 4000:4000 veronikasimic21/aws
+
 ## Project Status
 
 Project is: _in progress_
