@@ -46,7 +46,7 @@ app.post("/upload-image", (req, res) => {
         console.log(`File uploaded successfully. ${data.Location}`);
       }
 
-     const dynamoParams = {
+      const dynamoParams = {
         TableName: TABLE_NAME,
         Item: {
           image_id: image_id,
@@ -125,11 +125,10 @@ app.get("/image/:id", (req, res) => {
       return res.status(500).send("Error getting item from DynamoDB");
     } else {
       console.log("Item retrieved from DynamoDB");
-      console.log(data)
-     /*  console.log("Item state is:", data.Item.image_state);
-      console.log("Item file name is:", data.Item.fileName);
-      console.log("Item original S3 path is:", data.Item.originalFilePath);
-      console.log("Item processed S3 path is:", data.Item.processedFilePath); */
+      console.log("Item state is:", data.Item.image_state.S);
+      console.log("Item file name is:", data.Item.fileName.S);
+      console.log("Item original S3 path is:", data.Item.originalFilePath.S);
+      console.log("Item processed S3 path is:", data.Item.processedFilePath.S);
       return res.status(200).send(data.Item);
     }
   });

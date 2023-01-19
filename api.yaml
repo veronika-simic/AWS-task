@@ -17,6 +17,7 @@ schemes: [http, https]
 paths:
   #Returns a flipped image
   /image/{id}:
+    get:
       summary: Returns flipped image by id and its state
       description: It returns a link for image flipped for 180 degrees and state
       parameters:

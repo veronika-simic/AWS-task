@@ -35,7 +35,6 @@ sqs.receiveMessage(sqsParams, function (err, data) {
     console.log("Receive Error", err);
   } else if (data.Messages) {
     const image_id = JSON.parse(data.Messages[0].Body).image_id;
-    const fileName = JSON.parse(data.Messages[0].Body).fileName;
     const dynamoGetParams = {
       Key: {
         image_id: {

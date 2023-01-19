@@ -31,14 +31,13 @@ Upload image and rotate it for 180 degrees
 
 ![UI Swagger](./img/screenshot.png)
 
-
 ## Usage
 
 Download the repository and run
 
-node run scripts index.js
+npm run serve index.js
 
-Visit localhost:4000/api-docs for swagger
+Visit localhost:4000/api-docs
 
 ## Project Status
 
