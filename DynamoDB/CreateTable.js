@@ -3,20 +3,15 @@ AWS.config.update({ region: "us-east-1" });
 const dynamodb = new AWS.DynamoDB();
 
 const params = {
-  TableName: "user-images",
+  TableName: "user-images-data",
   KeySchema: [
     {
       AttributeName: "image_id",
       KeyType: "HASH" /* partition key */,
     },
-    {
-      AttributeName: "fileName",
-      KeyType: "RANGE" /* sort key */,
-    },
   ],
   AttributeDefinitions: [
     { AttributeName: "image_id", AttributeType: "N" },
-    { AttributeName: "fileName", AttributeType: "S" },
   ],
   ProvisionedThroughput: {
     ReadCapacityUnits: 4,

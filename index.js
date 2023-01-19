@@ -12,9 +12,10 @@ const AWS = require("aws-sdk");
 AWS.config.update({ region: "us-east-1" });
 const s3 = new AWS.S3();
 const dynamoDB = new AWS.DynamoDB.DocumentClient();
+const dynamodb = new AWS.DynamoDB();
 const sqs = new AWS.SQS();
 
-const TABLE_NAME = "user-images";
+const TABLE_NAME = "user-images-data";
 
 app.use(express.json());
 app.use(upload());
@@ -45,7 +46,7 @@ app.post("/upload-image", (req, res) => {
         console.log(`File uploaded successfully. ${data.Location}`);
       }
 
-      const dynamoParams = {
+     const dynamoParams = {
         TableName: TABLE_NAME,
         Item: {
           image_id: image_id,
@@ -61,7 +62,13 @@ app.post("/upload-image", (req, res) => {
           return res.status(500).send("Could not add image to table");
         } else {
           console.log("Image data added to table " + TABLE_NAME);
-          return res.status(200).send("Image data added successfully. Image id is: " + image_id + " use it to get the rotated image.");
+          return res
+            .status(200)
+            .send(
+              "Image data added successfully. Image id is: " +
+                image_id +
+                " use it to get the rotated image."
+            );
         }
       });
 
@@ -76,19 +83,19 @@ app.post("/upload-image", (req, res) => {
           taskState: "created",
         }),
         MessageAttributes: {
-          "image_id": {
+          image_id: {
             DataType: "String",
             StringValue: String(image_id),
           },
-          "fileName": {
+          fileName: {
             DataType: "String",
-            StringValue: fileName
+            StringValue: fileName,
           },
-          "state": {
+          state: {
             DataType: "String",
-            StringValue: dynamoParams.Item.image_state
-          }
-        }
+            StringValue: dynamoParams.Item.image_state,
+          },
+        },
       };
       console.log(sqsParams.MessageBody);
       sqs.sendMessage(sqsParams, (error, data) => {
@@ -103,7 +110,29 @@ app.post("/upload-image", (req, res) => {
 });
 
 app.get("/image/:id", (req, res) => {
-  res.send(req.params.id);
+  const dynamoGetParams = {
+    Key: {
+      image_id: {
+        N: req.params.id.toString(),
+      },
+    },
+    TableName: TABLE_NAME,
+  };
+
+  dynamodb.getItem(dynamoGetParams, (error, data) => {
+    if (error) {
+      console.log(error);
+      return res.status(500).send("Error getting item from DynamoDB");
+    } else {
+      console.log("Item retrieved from DynamoDB");
+      console.log(data)
+     /*  console.log("Item state is:", data.Item.image_state);
+      console.log("Item file name is:", data.Item.fileName);
+      console.log("Item original S3 path is:", data.Item.originalFilePath);
+      console.log("Item processed S3 path is:", data.Item.processedFilePath); */
+      return res.status(200).send(data.Item);
+    }
+  });
 });
 
 app.listen(4000, () => console.log("Running"));

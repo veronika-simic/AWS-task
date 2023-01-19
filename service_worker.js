@@ -10,7 +10,7 @@ const sharp = require("sharp");
 const s3 = new AWS.S3();
 const dynamodb = new AWS.DynamoDB();
 const dynamodbClient = new AWS.DynamoDB.DocumentClient();
-const TABLE_NAME = "user-images";
+const TABLE_NAME = "user-images-data";
 
 const queueUrl =
   "https://sqs.us-east-1.amazonaws.com/222621649155/ImageQueue.fifo";
@@ -41,9 +41,6 @@ sqs.receiveMessage(sqsParams, function (err, data) {
         image_id: {
           N: image_id.toString(),
         },
-        fileName: {
-          S: fileName,
-        },
       },
       TableName: TABLE_NAME,
     };
@@ -66,7 +63,6 @@ sqs.receiveMessage(sqsParams, function (err, data) {
         TableName: TABLE_NAME,
         Key: {
           image_id: image_id,
-          fileName: fileName,
         },
         UpdateExpression: "set image_state = :s",
         ExpressionAttributeValues: {
@@ -97,7 +93,6 @@ sqs.receiveMessage(sqsParams, function (err, data) {
             TableName: TABLE_NAME,
             Key: {
               image_id: image_id,
-              fileName: fileName,
             },
             UpdateExpression: "set processedFilePath = :p, image_state = :s",
             ExpressionAttributeValues: {

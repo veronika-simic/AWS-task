@@ -16,13 +16,12 @@ schemes: [http, https]
 
 paths:
   #Returns a flipped image
-  /image/{imageId}:
-    get:
-      summary: Returns flipped image by id
+  /image/{id}:
+      summary: Returns flipped image by id and its state
       description: It returns a link for image flipped for 180 degrees and state
       parameters:
         - in: path
-          name: imageId
+          name: id
           type: integer
           required: true
           description: Numeric ID of the flipped image to get.
@@ -32,11 +31,13 @@ paths:
           schema:
               type: object
               properties:
-                  id:
+                  image_id:
                     type: integer
-                  state:
+                  image_state:
                     type: string
-                  imgUrl: 
+                  originalFilePath: 
+                    type: string
+                  processedFilePath:
                     type: string
         400:
           description: Image does not exist
