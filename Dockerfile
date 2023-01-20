@@ -8,5 +8,6 @@ COPY ./package.json ./
 RUN npm install
 COPY ./ ./
 
+EXPOSE 80
 # comand to run 
 CMD ["npm", "run", "server"]
