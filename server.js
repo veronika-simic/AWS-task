@@ -7,7 +7,7 @@ const swaggerUI = require("swagger-ui-express");
 const YAML = require("yamljs");
 const swaggerJsDocs = YAML.load("./api.yaml");
 
-const sw = require('./service_worker')
+const sw = require("./service_worker");
 
 /* aws */
 const AWS = require("aws-sdk");
@@ -17,7 +17,7 @@ const dynamoDB = new AWS.DynamoDB.DocumentClient();
 const dynamodb = new AWS.DynamoDB();
 const sqs = new AWS.SQS();
 
-const auth = require('./auth')
+const auth = require("./auth");
 
 const TABLE_NAME = "user-images-data";
 
@@ -31,11 +31,10 @@ app.post("/upload-image", (req, res) => {
   const fileName = uploadedFile.name;
   const fileData = uploadedFile.data;
 
-
   if (!req.files) {
     res.status(400).send("No file uploaded");
   } else {
-    auth(req, res)
+    auth(req, res);
     console.log("File with name " + fileName + " was uploaded for processing.");
 
     const s3Params = {
@@ -65,7 +64,9 @@ app.post("/upload-image", (req, res) => {
       dynamoDB.put(dynamoParams, (error) => {
         if (error) {
           console.log(error);
-          return res.status(500).send("Could not add file to table. Check the file type");
+          return res
+            .status(500)
+            .send("Could not add file to table. Check the file type");
         } else {
           console.log("Image data added to table " + TABLE_NAME);
           return res
@@ -110,7 +111,7 @@ app.post("/upload-image", (req, res) => {
         } else {
           console.log("Message sent to SQS:", data.MessageId);
         }
-        sw()
+        sw();
       });
     });
   }

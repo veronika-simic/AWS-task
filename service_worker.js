@@ -51,7 +51,6 @@ module.exports = () => {
           console.log("Fetching image....");
           download(data.Item.originalFilePath.S, "user-image.jpg", function () {
             console.log("Image is ready for processing");
-            
           });
         }
       });

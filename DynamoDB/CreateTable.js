@@ -10,9 +10,7 @@ const params = {
       KeyType: "HASH" /* partition key */,
     },
   ],
-  AttributeDefinitions: [
-    { AttributeName: "image_id", AttributeType: "N" },
-  ],
+  AttributeDefinitions: [{ AttributeName: "image_id", AttributeType: "N" }],
   ProvisionedThroughput: {
     ReadCapacityUnits: 4,
     WriteCapacityUnits: 4,
