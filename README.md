@@ -35,7 +35,7 @@ Upload image and rotate it for 180 degrees
 
 Download the repository and run
 
-npm run serve
+npm run server
 
 Visit localhost:4000/api-docs
 
