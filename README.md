@@ -47,9 +47,12 @@ and run it
 
 sudo docker run -v ~/.aws:/root/.aws -p 4000:4000 veronikasimic21/aws
 
+to see this project hosted on aws visit:
+
+http://awstask-373250179.us-east-1.elb.amazonaws.com/api-docs/
 ## Project Status
 
-Project is: _in progress_
+Project is: _finished_
 
 ## Acknowledgements
 
